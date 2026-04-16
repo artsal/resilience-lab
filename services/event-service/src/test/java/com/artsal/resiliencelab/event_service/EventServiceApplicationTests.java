@@ -1,4 +1,4 @@
-package com.arthursalla.resiliencelab.event_service;
+package com.artsal.resiliencelab.event_service;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
