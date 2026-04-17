@@ -1,10 +1,33 @@
+# Maven
 target/
+!.mvn/wrapper/maven-wrapper.jar
+
+# Logs
 *.log
-*.class
+
+# IntelliJ
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build artifacts
 *.jar
 *.war
-*.iml
-.idea/
-.vscode/
-node_modules/
+*.class
+
+# Env files
 .env
+
+# Node (future frontend)
+node_modules/
+
+# Maven wrapper (keep these!)
+!mvnw
+!mvnw.cmd
+!.mvn/wrapper/maven-wrapper.properties
