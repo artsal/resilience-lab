@@ -3,6 +3,7 @@ package com.artsal.resiliencelab.processing.controller;
 import com.artsal.resiliencelab.processing.config.ChaosConfig;
 import org.springframework.web.bind.annotation.*;
 
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/chaos")
 public class ChaosController {
