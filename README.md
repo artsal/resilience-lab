@@ -1,40 +1,100 @@
 # 🧪 Resilience Lab
 
-An event-driven platform to simulate failure, recovery, and scalability in distributed systems.
+A distributed system simulator that demonstrates **failure handling, retries, dead-letter queues, and recovery** using modern backend technologies.
+
+---
+
+## 🚀 What This Project Demonstrates
+
+* Event-driven architecture using Kafka
+* Failure simulation (Chaos Engineering concepts)
+* Retry mechanisms with backoff
+* Dead Letter Queue (DLQ) handling
+* Manual replay and system recovery
+* Traffic spikes and latency simulation
+
+---
 
 ## 🏗️ Architecture
 
 ```
-event-service → Kafka → processing-service
+Client → Event Service → Kafka → Processing Service
+                                      ↓
+                                   (Failure)
+                                      ↓
+                               DLQ (Kafka)
+                                      ↓
+                             Replay (Manual)
+                                      ↓
+                              Back to Kafka
 ```
 
-## 🚀 Tech Stack
-
-* Java, Spring Boot (Microservices)
-* Apache Kafka (Event Streaming)
-* Docker (Kafka setup)
-* Swagger (API testing)
+---
 
 ## 🧩 Services
 
-### 1. Event Service
+| Service                   | Description                                           |
+| ------------------------- | ----------------------------------------------------- |
+| event-service             | Produces events to Kafka                              |
+| processing-service        | Consumes events, applies chaos, handles retries & DLQ |
+| (optional) replay-service | Handles replay of failed events (future enhancement)  |
 
-* Accepts API requests
-* Publishes events to Kafka
+---
 
-### 2. Processing Service
+## 🎮 Chaos Features
 
-* Consumes events from Kafka
-* Processes events (with failure simulation)
+* Toggle failure mode
+* Add processing delay
+* Generate bulk traffic
+* Replay failed events
 
-## 🎯 Goals
+---
 
-* Understand event-driven architecture
-* Simulate failures and recovery
-* Build resilient distributed systems
+## 🔧 Tech Stack
 
-## 🔄 Current Status
+* Java + Spring Boot
+* Apache Kafka
+* Docker (Kafka setup)
+* Swagger / OpenAPI
+* (Upcoming) MongoDB
+* (Upcoming) React UI
+* (Upcoming) Prometheus + Grafana
 
-* ✅ Kafka integration complete
-* ✅ Producer + Consumer working
-* ⏳ Failure handling (in progress)
+---
+
+## 🧪 Demo Scenarios
+
+### ✅ Normal Flow
+
+Event → Processed successfully
+
+### 💥 Failure Flow
+
+Event → Retry → DLQ
+
+### 🔁 Recovery Flow
+
+DLQ → Replay → Success
+
+### ⏱️ Latency Simulation
+
+Artificial delay in processing
+
+### 📈 Traffic Spike
+
+Bulk events causing backlog
+
+---
+
+## 🏃 How to Run
+
+1. Start Kafka (Docker)
+2. Run `event-service`
+3. Run `processing-service`
+4. Open Swagger UIs
+
+---
+
+## 🎯 Why This Project
+
+This project simulates **real-world distributed system failures and recovery**, making it a strong showcase of backend engineering and system design skills.
