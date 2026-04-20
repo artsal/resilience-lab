@@ -2,37 +2,63 @@
 
 ## 📌 Purpose
 
-Consumes events from Kafka and processes them.
+Consumes events from Kafka and processes them with **chaos simulation**.
 
 ---
 
-## 🚀 Responsibilities
+## 🚀 Features
 
-- Listens to Kafka topic: `events-topic`
-- Processes incoming events
-- Simulates failures (for resilience testing)
-
----
-
-## 🔁 Flow
-
-```
-Kafka → Processing Service
-```
+* Kafka consumer
+* Failure simulation
+* Delay simulation
+* Retry with backoff
+* Dead Letter Queue (DLQ)
+* Manual replay support
 
 ---
 
-## 🧪 Example Output
+## 🎮 Chaos Controls
+
+### Enable Failure
 
 ```
-📥 Received event: {...}
-✅ Successfully processed event: ...
+POST /api/chaos/failure?enabled=true
 ```
 
-or
+### Set Delay
 
 ```
-💥 Simulated failure for event: ...
+POST /api/chaos/delay?ms=3000
+```
+
+### Get Chaos State
+
+```
+GET /api/chaos
+```
+
+---
+
+## 🔁 Replay API
+
+```
+POST /api/replay
+```
+
+---
+
+## 🔄 Processing Flow
+
+```
+Kafka → Processing → Success
+                ↓
+              Failure
+                ↓
+            Retry (3x)
+                ↓
+              DLQ
+                ↓
+            Manual Replay
 ```
 
 ---
@@ -51,7 +77,18 @@ http://localhost:8081
 
 ---
 
-## 🧠 Notes
+## 📘 Swagger
 
-- Uses Kafka consumer group: `resilience-group`
-- Demonstrates async processing and failure scenarios
+```
+http://localhost:8081/swagger-ui/index.html
+```
+
+---
+
+## 🧠 Key Concepts Demonstrated
+
+* At-least-once delivery
+* Offset management
+* Retry strategies
+* DLQ handling
+* Chaos engineering basics
