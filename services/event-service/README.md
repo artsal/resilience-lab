@@ -3,37 +3,36 @@
 ## 📌 Purpose
 
 Acts as the **entry point** of the system.
-Accepts API requests and publishes events to Kafka.
+
+* Accepts API requests
+* Publishes events to Kafka
 
 ---
 
-## 🚀 Responsibilities
+## 🚀 Features
 
-- Exposes REST API (`/api/events`)
-- Generates event IDs
-- Publishes events to Kafka topic: `events-topic`
+* Send single event
+* Generate bulk events (traffic simulation)
+* Swagger API support
 
 ---
 
-## 🧪 Example API
+## 🧪 APIs
 
 ### POST /api/events
 
-```json
-{
-  "type": "USER_SIGNUP",
-  "payload": {
-    "userId": "123"
-  }
-}
-```
+Send a single event
+
+### POST /api/events/bulk?count=10
+
+Generate multiple events
 
 ---
 
 ## 🔁 Flow
 
 ```
-Client → Event Service → Kafka
+Client → Event Service → Kafka (events-topic)
 ```
 
 ---
@@ -55,5 +54,5 @@ http://localhost:8080
 ## 📘 Swagger
 
 ```
-http://localhost:8080/swagger-ui.html
+http://localhost:8080/swagger-ui/index.html
 ```
