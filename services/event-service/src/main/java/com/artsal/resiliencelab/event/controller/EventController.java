@@ -3,8 +3,8 @@ package com.artsal.resiliencelab.event.controller;
 import com.artsal.resiliencelab.event.producer.EventProducer;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/events")
@@ -17,25 +17,27 @@ public class EventController {
     }
 
     @PostMapping
-    public Map<String, String> createEvent(@RequestBody Map<String, Object> request) {
-
-        String eventId = UUID.randomUUID().toString();
-
-        request.put("eventId", eventId);
-
-        // 🔥 Send to Kafka
-        eventProducer.sendEvent("events-topic", request);
-
-        return Map.of(
-                "eventId", eventId,
-                "status", "PUBLISHED",
-                "message", "Event sent to Kafka"
-                     );
+    public String sendEvent(@RequestBody Map<String, Object> event) {
+        eventProducer.sendEvent(event);
+        return "Event sent";
     }
 
+    @PostMapping("/bulk")
+    public String generateBulk(@RequestParam int count) {
 
-    @GetMapping("/health")
-    public String health() {
-        return "Resilience Lab Event Service Running 🧪";
+        for (int i = 0; i < count; i++) {
+
+            Map<String, Object> event = new HashMap<>();
+            event.put("type", "USER_SIGNUP");
+
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("userId", "User-" + i);
+
+            event.put("payload", payload);
+
+            eventProducer.sendEvent(event);
+        }
+
+        return "Generated " + count + " events";
     }
 }

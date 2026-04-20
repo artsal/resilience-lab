@@ -3,6 +3,9 @@ package com.artsal.resiliencelab.event.producer;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.Map;
+import java.util.UUID;
+
 @Service
 public class EventProducer {
 
@@ -12,8 +15,13 @@ public class EventProducer {
         this.kafkaTemplate = kafkaTemplate;
     }
 
-    public void sendEvent(String topic, Object event) {
-        kafkaTemplate.send(topic, event);
+    public void sendEvent(Map<String, Object> event) {
+
+        event.put("eventId", UUID.randomUUID().toString());
+
+        kafkaTemplate.send("events-topic", event);
+
+        System.out.println("📤 Sent event: " + event);
     }
 
 }
