@@ -2,6 +2,9 @@ package com.artsal.resiliencelab.processing.consumer;
 
 import com.artsal.resiliencelab.processing.config.ChaosConfig;
 import com.artsal.resiliencelab.processing.service.EventService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.javapoet.ClassName;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
@@ -10,6 +13,7 @@ import java.util.Map;
 @Service
 public class EventConsumer {
 
+    private static final Logger log = LoggerFactory.getLogger(ClassName.class); // <-- for better logging context
     private final ChaosConfig chaosConfig;
     private final EventService eventService;
 
@@ -21,7 +25,7 @@ public class EventConsumer {
     @KafkaListener(topics = "events-topic", groupId = "resilience-group")
     public void consumeEvent(Map<String, Object> event) {
 
-        System.out.println("📥 Received event: " + event);
+        log.info("📥 Received event: {}", event);
 
         // ✅ Validate event structure FIRST
         validateEvent(event);
@@ -38,24 +42,30 @@ public class EventConsumer {
         // ⏱️ Delay
         if (chaosConfig.getDelayMs() > 0) {
             try {
-                System.out.println("⏱️ Delay: " + chaosConfig.getDelayMs());
+                log.info("⏱️ Delay: " + chaosConfig.getDelayMs());
                 Thread.sleep(chaosConfig.getDelayMs());
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
         }
 
-        // 💥 Failure simulation
-        if (chaosConfig.isFailEnabled() && event.get("retry") == null) {
+        // 🔥 NEW: Detect replay
+        boolean isReplay = Boolean.TRUE.equals(event.get("replayed"));
+
+        // 💥 Failure simulation (SKIP for replay)
+        if (chaosConfig.isFailEnabled() && !isReplay && event.get("retry") == null) {
             event.put("retry", true);
+
             eventService.updateStatus(eventId, "FAILED");
-            System.out.println("💥 Simulated failure: " + eventId);
+
+            log.warn("💥 Simulated failure for event: {}", eventId);
+
             throw new RuntimeException("Simulated failure");
         }
 
+        // ✅ SUCCESS (always reached for replay)
         eventService.updateStatus(eventId, "SUCCESS");
-
-        System.out.println("✅ Processed: " + eventId);
+        log.info("✅ Successfully processed event with ID: {} (replay: {})", eventId, isReplay);
     }
 
     // 🔥 Clean validation method
@@ -65,19 +75,16 @@ public class EventConsumer {
             throw new RuntimeException("Invalid event: event is null");
         }
 
-        // Validate type
         if (!event.containsKey("type") || !(event.get("type") instanceof String)) {
             throw new RuntimeException("Invalid event: missing or invalid 'type'");
         }
 
-        // Validate payload
         if (!event.containsKey("payload") || !(event.get("payload") instanceof Map)) {
             throw new RuntimeException("Invalid event: missing or invalid 'payload'");
         }
 
         Map<String, Object> payload = (Map<String, Object>) event.get("payload");
 
-        // Validate userId
         if (!payload.containsKey("userId") || !(payload.get("userId") instanceof String)) {
             throw new RuntimeException("Invalid event: missing or invalid 'userId'");
         }

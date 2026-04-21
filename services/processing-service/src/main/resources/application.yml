@@ -22,3 +22,7 @@ spring:
     mongodb:
       uri: mongodb://localhost:27017/resiliencelab
       database: resiliencelab
+
+logging:
+  pattern:
+      console: "%d{HH:mm:ss} [%level] %msg%n"
