@@ -251,7 +251,7 @@ function App() {
                         onMouseEnter={hoverIn}
                         onMouseLeave={hoverOut}
                       >
-                        Replay
+                        Replay Event
                       </button>
                     ) : (
                       "—"
@@ -331,7 +331,7 @@ const row = {
 };
 
 const tableBox = {
-  height: 420,
+  maxHeight: 420,
   overflowY: "auto",
   border: "1px solid #30363d",
   borderRadius: 6,
