@@ -385,7 +385,7 @@ function App() {
 
       <footer style={footer}>
         <div style={{ fontSize: 14 }}>
-          © {new Date().getFullYear()} Reo Leo. All rights reserved.
+          © {new Date().getFullYear()} Arthur Salla. All rights reserved.
         </div>
         <div style={{ fontSize: 12, color: "#8b949e" }}>
           Resilience Lab — Distributed Systems Simulation
