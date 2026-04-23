@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 
 const API_PROCESSING = "http://localhost:8081";
@@ -15,6 +15,10 @@ function App() {
   const [loading, setLoading] = useState(false);
 
   const [demoRunning, setDemoRunning] = useState(false);
+  const [demoPhase, setDemoPhase] = useState("");
+
+  const prevStatusRef = useRef({});
+  const [changedMap, setChangedMap] = useState({});
 
   const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
   const isDisabled = demoRunning;
@@ -26,14 +30,31 @@ function App() {
     const interval = setInterval(() => {
       fetchEvents();
       fetchChaos();
-    }, 5000);
+    }, 2000);
 
     return () => clearInterval(interval);
   }, []);
 
   const fetchEvents = async () => {
     const res = await axios.get(`${API_PROCESSING}/api/events`);
-    setEvents(res.data.sort((a, b) => b.createdAt - a.createdAt));
+    const newEvents = res.data.sort((a, b) => b.createdAt - a.createdAt);
+
+    const newChangedMap = {};
+    newEvents.forEach((e) => {
+      const prev = prevStatusRef.current[e.eventId];
+      if (prev && prev !== e.status) {
+        newChangedMap[e.eventId] = true;
+      }
+    });
+
+    const nextMap = {};
+    newEvents.forEach((e) => {
+      nextMap[e.eventId] = e.status;
+    });
+
+    prevStatusRef.current = nextMap;
+    setChangedMap(newChangedMap);
+    setEvents(newEvents);
   };
 
   const fetchChaos = async () => {
@@ -98,44 +119,97 @@ function App() {
     fetchEvents();
   };
 
-  // 🔥 DEMO MODE
   const runDemo = async () => {
     if (demoRunning) return;
 
     setDemoRunning(true);
 
+    const demoEventIds = [];
+
     try {
-      await axios.post(`${API_EVENT}/api/events/bulk?count=15`);
-      await sleep(2000);
+      setDemoPhase("Injecting latency...");
+      await axios.post(`${API_PROCESSING}/api/chaos/delay?ms=2000`);
+      await sleep(1000);
 
-      await axios.post(`${API_PROCESSING}/api/chaos/failure?enabled=true`);
-      await sleep(5000);
+      setDemoPhase("Enabling failure...");
+      await enableFailure();
+      await sleep(1000);
 
-      await axios.post(`${API_PROCESSING}/api/chaos/failure?enabled=false`);
-      await sleep(2000);
+      setDemoPhase("Sending events...");
+      for (let i = 0; i < 10; i++) {
+        const id = `demo-${i}-${Date.now()}`;
+        demoEventIds.push(id);
 
-      const dlqEvents = events.filter((e) => e.status === "DLQ");
+        await axios.post(`${API_EVENT}/api/events`, {
+          type: "USER_SIGNUP",
+          payload: { userId: id },
+        });
 
-      for (const e of dlqEvents) {
-        await axios.post(`${API_PROCESSING}/api/replay`, e);
-        await sleep(300);
+        await sleep(400);
       }
 
-      fetchEvents();
+      await sleep(5000);
+
+      setDemoPhase("Disabling failure...");
+      await disableFailure();
+      await sleep(2000);
+
+      setDemoPhase("Replaying DLQ...");
+      await fetchEvents();
+
+      const dlqEvents = events.filter(
+        (e) => e.status === "DLQ" && demoEventIds.includes(e.userId),
+      );
+
+      for (const e of dlqEvents) {
+        await replayEvent(e);
+        await sleep(400);
+      }
+
+      await resetDelay();
+      setDemoPhase("Completed");
     } finally {
       setDemoRunning(false);
     }
   };
 
+  const getFlashClass = (status) => {
+    const map = {
+      SUCCESS: "flash-green",
+      FAILED: "flash-red",
+      DLQ: "flash-orange",
+      PROCESSING: "flash-blue",
+    };
+    return map[status] || "";
+  };
+
   return (
     <div style={page}>
+      <style>{`
+        @keyframes flashGreen { 0%{background:#2ecc7160;} 100%{background:transparent;} }
+        @keyframes flashRed { 0%{background:#e74c3c60;} 100%{background:transparent;} }
+        @keyframes flashOrange { 0%{background:#f39c1260;} 100%{background:transparent;} }
+        @keyframes flashBlue { 0%{background:#3498db60;} 100%{background:transparent;} }
+
+        .flash-green { animation: flashGreen 0.8s ease; }
+        .flash-red { animation: flashRed 0.8s ease; }
+        .flash-orange { animation: flashOrange 0.8s ease; }
+        .flash-blue { animation: flashBlue 0.8s ease; }
+      `}</style>
+
       <div style={container}>
         <h1 style={{ textAlign: "center" }}>🧪 Resilience Lab</h1>
 
-        {/* Narrative */}
         <div style={narrative}>
           Simulating failure, retries, DLQ and recovery in an event-driven
           system
+        </div>
+
+        {/* Latency */}
+        <div style={{ textAlign: "center", marginBottom: 10 }}>
+          <span style={{ color: "#58a6ff" }}>
+            Latency: {chaos.delayMs ? `${chaos.delayMs} ms` : "OFF"}
+          </span>
         </div>
 
         {/* Status */}
@@ -147,19 +221,12 @@ function App() {
           )}
         </div>
 
-        {/* Demo Button */}
+        {/* Demo */}
         <div style={{ textAlign: "center", marginBottom: 20 }}>
-          <button
-            disabled={isDisabled}
-            onClick={runDemo}
-            style={{
-              ...demoBtn,
-              opacity: isDisabled ? 0.6 : 1,
-              cursor: isDisabled ? "not-allowed" : "pointer",
-            }}
-          >
+          <button disabled={isDisabled} onClick={runDemo} style={demoBtn}>
             {demoRunning ? "⏳ Demo in Progress..." : "▶ Run Chaos Demo"}
           </button>
+          {demoRunning && <div>{demoPhase}</div>}
         </div>
 
         {/* Metrics */}
@@ -201,63 +268,61 @@ function App() {
         </div>
 
         {/* Controls */}
-        <div style={row}>
-          <input
-            value={delay}
-            onChange={(e) => setDelay(e.target.value)}
-            placeholder="Delay ms"
-            style={input}
-          />
-          <button
-            disabled={isDisabled}
-            style={{ ...primaryBtn, opacity: isDisabled ? 0.5 : 1 }}
-            onClick={setChaosDelay}
-          >
-            Set Delay
-          </button>
-          <button
-            disabled={isDisabled}
-            style={{ ...secondaryBtn, opacity: isDisabled ? 0.5 : 1 }}
-            onClick={resetDelay}
-          >
-            Reset
-          </button>
+        <div style={section}>
+          <div style={group}>
+            <input
+              value={delay}
+              onChange={(e) => setDelay(e.target.value)}
+              placeholder="Delay ms"
+              style={input}
+            />
+            <button
+              disabled={isDisabled}
+              style={primaryBtn}
+              onClick={setChaosDelay}
+            >
+              Set Delay
+            </button>
+            <button
+              disabled={isDisabled}
+              style={secondaryBtn}
+              onClick={resetDelay}
+            >
+              Reset
+            </button>
+          </div>
+
+          <div style={group}>
+            <input
+              value={userId}
+              onChange={(e) => setUserId(e.target.value)}
+              placeholder="User ID"
+              style={input}
+            />
+            <button
+              disabled={isDisabled}
+              style={primaryBtn}
+              onClick={sendEvent}
+            >
+              Send
+            </button>
+          </div>
         </div>
 
-        <div style={row}>
-          <input
-            value={userId}
-            onChange={(e) => setUserId(e.target.value)}
-            placeholder="User ID"
-            style={input}
-          />
-          <button
-            disabled={isDisabled}
-            style={{ ...primaryBtn, opacity: isDisabled ? 0.5 : 1 }}
-            onClick={sendEvent}
-          >
-            Send
-          </button>
-        </div>
-
-        <div style={row}>
-          <button
-            disabled={isDisabled}
-            style={{ ...warningBtn, opacity: isDisabled ? 0.5 : 1 }}
-            onClick={sendBulk}
-          >
+        <div style={section}>
+          <button disabled={isDisabled} style={warningBtn} onClick={sendBulk}>
             {loading ? "Sending..." : "Bulk"}
           </button>
           <button
             disabled={isDisabled}
-            style={{ ...dangerBtn, opacity: isDisabled ? 0.5 : 1 }}
+            style={dangerBtn}
             onClick={enableFailure}
           >
             Enable Failure
           </button>
           <button
             disabled={isDisabled}
-            style={{ ...successBtn, opacity: isDisabled ? 0.5 : 1 }}
+            style={successBtn}
             onClick={disableFailure}
           >
             Disable Failure
@@ -267,61 +332,60 @@ function App() {
         {/* Table */}
         <div style={tableBox}>
           <table style={{ width: "100%" }}>
-            <thead>
-              <tr>
-                <th style={cell}>Event ID</th>
-                <th style={cell}>User</th>
-                <th style={cell}>Status</th>
-                <th style={cell}>Action</th>
-              </tr>
-            </thead>
             <tbody>
-              {visibleEvents.map((e) => (
-                <tr key={e.eventId}>
-                  <td style={cell}>{e.eventId}</td>
-                  <td style={cell}>{e.userId}</td>
-                  <td style={cell}>
-                    <StatusBadge status={e.status} />
-                  </td>
-                  <td style={cell}>
-                    {e.status === "DLQ" ? (
-                      <button
-                        disabled={isDisabled}
-                        style={primaryBtn}
-                        onClick={() => replayEvent(e)}
-                      >
-                        🔁 Recover
-                      </button>
-                    ) : (
-                      "—"
-                    )}
-                  </td>
-                </tr>
-              ))}
+              {visibleEvents.map((e) => {
+                const changed = changedMap[e.eventId];
+                return (
+                  <tr
+                    key={e.eventId}
+                    className={changed ? getFlashClass(e.status) : ""}
+                  >
+                    <td style={cell}>{e.eventId}</td>
+                    <td style={cell}>{e.userId}</td>
+                    <td style={cell}>
+                      <StatusBadge status={e.status} />
+                    </td>
+                    <td style={cell}>
+                      {e.status === "DLQ" ? (
+                        <button
+                          disabled={isDisabled}
+                          style={primaryBtn}
+                          onClick={() => replayEvent(e)}
+                        >
+                          🔁 Recover
+                        </button>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
 
-        <div style={countText}>
-          Showing {visibleEvents.length} / {filtered.length}
-        </div>
-
+        {/* Load More */}
         {visibleCount < filtered.length && (
           <div style={{ textAlign: "center", marginTop: 10 }}>
             <button
               disabled={isDisabled}
-              style={secondaryBtn}
+              style={primaryBtn}
               onClick={() => setVisibleCount((v) => v + 20)}
             >
               Load More
             </button>
           </div>
         )}
+
+        <div style={countText}>
+          Showing {visibleEvents.length} / {filtered.length}
+        </div>
       </div>
 
       <footer style={footer}>
         <div style={{ fontSize: 14 }}>
-          © {new Date().getFullYear()} Arthur Salla. All rights reserved.
+          © {new Date().getFullYear()} Reo Leo. All rights reserved.
         </div>
         <div style={{ fontSize: 12, color: "#8b949e" }}>
           Resilience Lab — Distributed Systems Simulation
@@ -335,8 +399,23 @@ function App() {
   );
 }
 
-/* ---------- STYLES ---------- */
+/* STYLES UNCHANGED BELOW */
 
+const section = {
+  display: "flex",
+  justifyContent: "center",
+  gap: 30,
+  marginBottom: 20,
+  flexWrap: "wrap",
+};
+const group = {
+  display: "flex",
+  alignItems: "center",
+  gap: 10,
+  background: "#161b22",
+  padding: "10px 14px",
+  borderRadius: 8,
+};
 const page = { background: "#0d1117", color: "#e6edf3", minHeight: "100vh" };
 const container = { maxWidth: 1100, margin: "auto", padding: 20 };
 const row = {
