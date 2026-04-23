@@ -26,3 +26,17 @@ spring:
 logging:
   pattern:
       console: "%d{HH:mm:ss} [%level] %msg%n"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+  endpoint:
+    health:
+      show-details: always
+  prometheus:
+    metrics:
+      export:
+
+

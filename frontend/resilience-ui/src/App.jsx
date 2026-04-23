@@ -14,6 +14,11 @@ function App() {
   const [userId, setUserId] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const [demoRunning, setDemoRunning] = useState(false);
+
+  const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
+  const isDisabled = demoRunning;
+
   useEffect(() => {
     fetchEvents();
     fetchChaos();
@@ -93,85 +98,132 @@ function App() {
     fetchEvents();
   };
 
+  // 🔥 DEMO MODE
+  const runDemo = async () => {
+    if (demoRunning) return;
+
+    setDemoRunning(true);
+
+    try {
+      await axios.post(`${API_EVENT}/api/events/bulk?count=15`);
+      await sleep(2000);
+
+      await axios.post(`${API_PROCESSING}/api/chaos/failure?enabled=true`);
+      await sleep(5000);
+
+      await axios.post(`${API_PROCESSING}/api/chaos/failure?enabled=false`);
+      await sleep(2000);
+
+      const dlqEvents = events.filter((e) => e.status === "DLQ");
+
+      for (const e of dlqEvents) {
+        await axios.post(`${API_PROCESSING}/api/replay`, e);
+        await sleep(300);
+      }
+
+      fetchEvents();
+    } finally {
+      setDemoRunning(false);
+    }
+  };
+
   return (
     <div style={page}>
       <div style={container}>
         <h1 style={{ textAlign: "center" }}>🧪 Resilience Lab</h1>
 
-        {/* METRICS */}
-        <div style={metrics}>
-          Total: {events.length} |
-          <span style={{ color: "#2ecc71" }}> Success: {success}</span> |
-          <span style={{ color: "#f39c12" }}> DLQ: {dlq}</span>
+        {/* Narrative */}
+        <div style={narrative}>
+          Simulating failure, retries, DLQ and recovery in an event-driven
+          system
         </div>
 
-        {/* FILTERS */}
+        {/* Status */}
+        <div style={{ textAlign: "center", marginBottom: 10 }}>
+          {chaos.failEnabled ? (
+            <span style={{ color: "#e74c3c" }}>🔴 Failure Mode ON</span>
+          ) : (
+            <span style={{ color: "#2ecc71" }}>🟢 System Healthy</span>
+          )}
+        </div>
+
+        {/* Demo Button */}
+        <div style={{ textAlign: "center", marginBottom: 20 }}>
+          <button
+            disabled={isDisabled}
+            onClick={runDemo}
+            style={{
+              ...demoBtn,
+              opacity: isDisabled ? 0.6 : 1,
+              cursor: isDisabled ? "not-allowed" : "pointer",
+            }}
+          >
+            {demoRunning ? "⏳ Demo in Progress..." : "▶ Run Chaos Demo"}
+          </button>
+        </div>
+
+        {/* Metrics */}
+        <div style={metricsRow}>
+          <div style={card}>
+            Total
+            <br />
+            <b>{events.length}</b>
+          </div>
+          <div style={{ ...card, color: "#2ecc71" }}>
+            Success
+            <br />
+            <b>{success}</b>
+          </div>
+          <div style={{ ...card, color: "#f39c12" }}>
+            DLQ
+            <br />
+            <b>{dlq}</b>
+          </div>
+        </div>
+
+        {/* Filters */}
         <div style={row}>
           {["ALL", "SUCCESS", "DLQ"].map((f) => (
             <button
               key={f}
+              disabled={isDisabled}
               onClick={() => setFilter(f)}
               style={{
                 ...filterPill,
                 background: filter === f ? "#1f6feb" : "transparent",
                 color: filter === f ? "#fff" : "#ccc",
-                border: filter === f ? "1px solid #1f6feb" : "1px solid #444",
+                opacity: isDisabled ? 0.5 : 1,
               }}
-              onMouseEnter={hoverIn}
-              onMouseLeave={hoverOut}
             >
               {f}
             </button>
           ))}
         </div>
 
-        {/* CHAOS */}
+        {/* Controls */}
         <div style={row}>
-          <span>
-            Failure:
-            <b
-              style={{
-                marginLeft: 5,
-                color: chaos.failEnabled ? "#e74c3c" : "#2ecc71",
-              }}
-            >
-              {chaos.failEnabled ? " ON" : " OFF"}
-            </b>
-          </span>
-
-          <span>
-            Latency:
-            <b style={{ marginLeft: 5 }}>
-              {chaos.delayMs > 0 ? `${chaos.delayMs} ms` : "OFF"}
-            </b>
-          </span>
-
           <input
             value={delay}
             onChange={(e) => setDelay(e.target.value)}
             placeholder="Delay ms"
             style={input}
           />
-
           <button
-            style={primaryBtn}
+            disabled={isDisabled}
+            style={{ ...primaryBtn, opacity: isDisabled ? 0.5 : 1 }}
             onClick={setChaosDelay}
-            onMouseEnter={hoverIn}
-            onMouseLeave={hoverOut}
           >
             Set Delay
           </button>
           <button
-            style={secondaryBtn}
+            disabled={isDisabled}
+            style={{ ...secondaryBtn, opacity: isDisabled ? 0.5 : 1 }}
             onClick={resetDelay}
-            onMouseEnter={hoverIn}
-            onMouseLeave={hoverOut}
           >
             Reset
           </button>
         </div>
 
-        {/* INPUT */}
         <div style={row}>
           <input
             value={userId}
@@ -180,78 +232,65 @@ function App() {
             style={input}
           />
           <button
-            style={primaryBtn}
+            disabled={isDisabled}
+            style={{ ...primaryBtn, opacity: isDisabled ? 0.5 : 1 }}
             onClick={sendEvent}
-            onMouseEnter={hoverIn}
-            onMouseLeave={hoverOut}
           >
             Send
           </button>
         </div>
 
-        {/* ACTIONS */}
         <div style={row}>
           <button
-            style={warningBtn}
+            disabled={isDisabled}
+            style={{ ...warningBtn, opacity: isDisabled ? 0.5 : 1 }}
             onClick={sendBulk}
-            onMouseEnter={hoverIn}
-            onMouseLeave={hoverOut}
           >
             {loading ? "Sending..." : "Bulk"}
           </button>
-
           <button
-            style={dangerBtn}
+            disabled={isDisabled}
+            style={{ ...dangerBtn, opacity: isDisabled ? 0.5 : 1 }}
             onClick={enableFailure}
-            onMouseEnter={hoverIn}
-            onMouseLeave={hoverOut}
           >
             Enable Failure
           </button>
-
           <button
-            style={successBtn}
+            disabled={isDisabled}
+            style={{ ...successBtn, opacity: isDisabled ? 0.5 : 1 }}
             onClick={disableFailure}
-            onMouseEnter={hoverIn}
-            onMouseLeave={hoverOut}
           >
             Disable Failure
           </button>
         </div>
 
-        {/* TABLE */}
+        {/* Table */}
         <div style={tableBox}>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <table style={{ width: "100%" }}>
             <thead>
-              <tr style={{ background: "#161b22" }}>
+              <tr>
                 <th style={cell}>Event ID</th>
                 <th style={cell}>User</th>
                 <th style={cell}>Status</th>
-                <th style={cell}>Replay</th>
+                <th style={cell}>Action</th>
               </tr>
             </thead>
-
             <tbody>
-              {visibleEvents.map((e, i) => (
-                <tr
-                  key={e.eventId}
-                  style={{ background: i % 2 ? "#161b22" : "transparent" }}
-                >
+              {visibleEvents.map((e) => (
+                <tr key={e.eventId}>
                   <td style={cell}>{e.eventId}</td>
                   <td style={cell}>{e.userId}</td>
                   <td style={cell}>
                     <StatusBadge status={e.status} />
                   </td>
-
                   <td style={cell}>
                     {e.status === "DLQ" ? (
                       <button
+                        disabled={isDisabled}
                         style={primaryBtn}
                         onClick={() => replayEvent(e)}
-                        onMouseEnter={hoverIn}
-                        onMouseLeave={hoverOut}
                       >
-                        Replay Event
+                        🔁 Recover
                       </button>
                     ) : (
                       "—"
@@ -263,19 +302,16 @@ function App() {
           </table>
         </div>
 
-        {/* COUNT */}
         <div style={countText}>
-          Showing {visibleEvents.length} / {filtered.length} events
+          Showing {visibleEvents.length} / {filtered.length}
         </div>
 
-        {/* LOAD MORE */}
         {visibleCount < filtered.length && (
           <div style={{ textAlign: "center", marginTop: 10 }}>
             <button
+              disabled={isDisabled}
               style={secondaryBtn}
               onClick={() => setVisibleCount((v) => v + 20)}
-              onMouseEnter={hoverIn}
-              onMouseLeave={hoverOut}
             >
               Load More
             </button>
@@ -284,44 +320,25 @@ function App() {
       </div>
 
       <footer style={footer}>
-        <div>
+        <div style={{ fontSize: 14 }}>
           © {new Date().getFullYear()} Arthur Salla. All rights reserved.
         </div>
-        <div>Crafted with 🔥 using Spring Boot, React, Kafka & MongoDB.</div>
+        <div style={{ fontSize: 12, color: "#8b949e" }}>
+          Resilience Lab — Distributed Systems Simulation
+        </div>
+        <div style={{ fontSize: 12, color: "#6e7681" }}>
+          Crafted with 🔥 using Spring Boot, Kafka, MongoDB, React, Prometheus &
+          Grafana
+        </div>
       </footer>
     </div>
   );
 }
 
-/* ---------- HOVER ---------- */
-const hoverIn = (e) => {
-  e.currentTarget.style.opacity = 0.9;
-  e.currentTarget.style.transform = "translateY(-1px)";
-};
-
-const hoverOut = (e) => {
-  e.currentTarget.style.opacity = 1;
-  e.currentTarget.style.transform = "translateY(0)";
-};
-
 /* ---------- STYLES ---------- */
-const page = {
-  minHeight: "100vh",
-  background: "#0d1117",
-  color: "#e6edf3",
-  display: "flex",
-  flexDirection: "column",
-};
 
-const container = {
-  maxWidth: "1100px",
-  margin: "auto",
-  padding: "30px 20px",
-  flex: 1,
-};
-
-const metrics = { textAlign: "center", marginBottom: 20 };
-
+const page = { background: "#0d1117", color: "#e6edf3", minHeight: "100vh" };
+const container = { maxWidth: 1100, margin: "auto", padding: 20 };
 const row = {
   display: "flex",
   justifyContent: "center",
@@ -329,64 +346,45 @@ const row = {
   marginBottom: 20,
   flexWrap: "wrap",
 };
-
-const tableBox = {
-  maxHeight: 420,
-  overflowY: "auto",
-  border: "1px solid #30363d",
-  borderRadius: 6,
+const metricsRow = {
+  display: "flex",
+  justifyContent: "center",
+  gap: 20,
+  marginBottom: 20,
 };
-
-const cell = { padding: "12px", textAlign: "center" };
-
-const countText = {
-  textAlign: "center",
-  marginTop: 8,
-  fontSize: 13,
-  color: "#888",
-};
-
+const card = { padding: 12, background: "#161b22", borderRadius: 8 };
+const input = { padding: 6 };
+const tableBox = { maxHeight: 400, overflowY: "auto" };
+const cell = { padding: 10, textAlign: "center" };
+const countText = { textAlign: "center", marginTop: 10 };
 const footer = {
   textAlign: "center",
-  margin: "5px",
-  color: "#888",
-  fontSize: 14,
+  padding: "16px 10px",
+  borderTop: "1px solid #30363d",
+  marginTop: "30px",
+  color: "#8b949e",
 };
 
-const baseBtn = {
-  padding: "6px 12px",
-  borderRadius: 6,
-  border: "none",
-  cursor: "pointer",
-  transition: "all 0.2s ease",
-};
-
-const primaryBtn = { ...baseBtn, background: "#3498db", color: "#fff" };
-const dangerBtn = { ...baseBtn, background: "#e74c3c", color: "#fff" };
-const successBtn = { ...baseBtn, background: "#2ecc71", color: "#fff" };
-const warningBtn = { ...baseBtn, background: "#f39c12", color: "#fff" };
-
-// UPDATED SECONDARY BUTTON (visible now)
-const secondaryBtn = {
-  ...baseBtn,
-  background: "#2c2f36",
-  border: "1px solid #555",
-  color: "#ddd",
-};
-
-const filterPill = {
-  padding: "6px 14px",
-  borderRadius: "20px",
-  fontSize: "13px",
-};
-
-const input = {
-  padding: "6px",
-  borderRadius: 4,
-  border: "1px solid #444",
-  background: "#111",
+const primaryBtn = {
+  background: "#3498db",
   color: "#fff",
+  padding: "6px 12px",
 };
+const secondaryBtn = { background: "#444", color: "#fff", padding: "6px 12px" };
+const warningBtn = {
+  background: "#f39c12",
+  color: "#fff",
+  padding: "6px 12px",
+};
+const dangerBtn = { background: "#e74c3c", color: "#fff", padding: "6px 12px" };
+const successBtn = {
+  background: "#2ecc71",
+  color: "#fff",
+  padding: "6px 12px",
+};
+const demoBtn = { background: "#8e44ad", color: "#fff", padding: "10px 16px" };
+const filterPill = { padding: "6px 12px", borderRadius: 20 };
+const narrative = { textAlign: "center", marginBottom: 20, color: "#8b949e" };
 
 function StatusBadge({ status }) {
   const map = {
@@ -396,20 +394,7 @@ function StatusBadge({ status }) {
     PROCESSING: "#3498db",
     REPLAYING: "#9b59b6",
   };
-
-  return (
-    <span
-      style={{
-        padding: "4px 8px",
-        borderRadius: 4,
-        background: map[status],
-        color: "#fff",
-        fontSize: 12,
-      }}
-    >
-      {status}
-    </span>
-  );
+  return <span style={{ background: map[status], padding: 4 }}>{status}</span>;
 }
 
 export default App;
