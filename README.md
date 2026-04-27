@@ -1,3 +1,11 @@
+![Java](https://img.shields.io/badge/Java-17-orange)
+![Spring Boot](https://img.shields.io/badge/SpringBoot-3.x-brightgreen)
+![Kafka](https://img.shields.io/badge/Kafka-Event--Driven-pink)
+![Docker](https://img.shields.io/badge/Docker-Containerized-blue)
+![Prometheus](https://img.shields.io/badge/Prometheus-Monitoring-orange)
+![Grafana](https://img.shields.io/badge/Grafana-Dashboards-yellow)
+![Status](https://img.shields.io/badge/Status-Production--Style-success)
+
 # 🚀 Resilience Lab — Event-Driven Microservices System
 
 A production-style, event-driven microservices platform designed to demonstrate **resilience, observability, and failure handling** using modern backend architecture patterns.
@@ -7,7 +15,6 @@ A production-style, event-driven microservices platform designed to demonstrate 
 ## 👨‍💻 Author
 
 **Arthur Salla**
-Senior Software Engineer | Transitioning into AI & Distributed Systems Engineering
 
 ---
 
@@ -170,6 +177,14 @@ infra/
   grafana/
 docker-compose.yml
 ```
+
+---
+
+## 🏗️ Architecture
+
+![Architecture Diagram](./assets/architecture.png)
+
+---
 
 ---
 
