@@ -180,6 +180,47 @@ docker-compose.yml
 
 ---
 
+## 🏗️ Architecture Diagram
+
+        ┌──────────────────────┐
+        │     Frontend (React) │
+        └──────────┬───────────┘
+                   │
+                   ▼
+        ┌──────────────────────┐
+        │    API Gateway       │
+        │ (Spring Cloud GW)    │
+        └──────────┬───────────┘
+                   │
+        ┌──────────┴───────────┐
+        ▼                      ▼
+┌──────────────────┐   ┌──────────────────────┐
+│  Event Service    │   │ Processing Service   │
+│ (Producer)        │   │ (Consumer + DLQ)     │
+└──────────┬────────┘   └──────────┬───────────┘
+           │                       │
+           ▼                       ▼
+      ┌───────────┐        ┌──────────────┐
+      │   Kafka   │        │   MongoDB     │
+      └───────────┘        └──────────────┘
+              │
+              ▼
+        ┌──────────────┐
+        │ Prometheus    │
+        └──────┬───────┘
+               ▼
+        ┌──────────────┐
+        │   Grafana     │
+        └──────┬───────┘
+               ▼
+        ┌──────────────┐
+        │    Alerts     │
+        └──────────────┘
+
+---
+
+---
+
 ## 🎯 What This Project Demonstrates
 
 - Microservices architecture design
