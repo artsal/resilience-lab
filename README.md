@@ -180,9 +180,9 @@ docker-compose.yml
 
 ---
 
-## 🏗️ Architecture Diagram
+## 🏗️ Architecture
 
-     
+![Architecture Diagram](./assets/architecture.png)
 
 ---
 
