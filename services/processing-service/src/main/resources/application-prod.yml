@@ -1,0 +1,7 @@
+spring:
+  kafka:
+    bootstrap-servers: <AWS_KAFKA_URL>
+
+  data:
+    mongodb:
+      uri: mongodb://<AWS_MONGO_URL>/resiliencelab

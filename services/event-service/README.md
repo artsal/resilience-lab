@@ -1,58 +1,57 @@
-# 📡 Event Service
+# 📥 Event Service
 
-## 📌 Purpose
-
-Acts as the **entry point** of the system.
-
-* Accepts API requests
-* Publishes events to Kafka
+Handles event ingestion and publishes messages to Kafka.
 
 ---
 
-## 🚀 Features
+## 👨‍💻 Author
 
-* Send single event
-* Generate bulk events (traffic simulation)
-* Swagger API support
+**Arthur Salla**
 
 ---
 
-## 🧪 APIs
+## 🧠 Responsibility
 
-### POST /api/events
-
-Send a single event
-
-### POST /api/events/bulk?count=10
-
-Generate multiple events
+- Accept incoming events
+- Produce messages to Kafka topic
 
 ---
 
-## 🔁 Flow
+## 🔗 API Endpoints
 
-```
-Client → Event Service → Kafka (events-topic)
+```text
+POST /api/events
+POST /api/events/bulk?count=100
 ```
 
 ---
 
-## ⚙️ Running
+## ⚙️ Tech Stack
 
-```bash
-mvn spring-boot:run
-```
+- Spring Boot
+- Kafka Producer
+- REST APIs
 
-Runs on:
+---
 
-```
-http://localhost:8080
+## 🧠 Flow
+
+```text
+Client → Event Service → Kafka
 ```
 
 ---
 
-## 📘 Swagger
+## ⚙️ Configuration
 
-```
-http://localhost:8080/swagger-ui/index.html
-```
+- Kafka bootstrap servers
+- Topic configuration
+- Environment profiles (local / docker)
+
+---
+
+## 🎯 Design Notes
+
+- Stateless service
+- Designed for scalability
+- Decouples producer from consumer

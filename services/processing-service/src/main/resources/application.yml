@@ -5,7 +5,6 @@ spring:
   application:
     name: processing-service
   kafka:
-    bootstrap-servers: kafka:9092
     consumer:
       group-id: resilience-group
       auto-offset-reset: earliest
@@ -20,7 +19,6 @@ spring:
 
   data:
     mongodb:
-      uri: mongodb://mongo:27017/resiliencelab
       database: resiliencelab
 
 logging:
@@ -38,5 +36,3 @@ management:
   prometheus:
     metrics:
       export:
-
-

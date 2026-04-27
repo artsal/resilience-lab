@@ -1,94 +1,63 @@
 # ⚙️ Processing Service
 
-## 📌 Purpose
-
-Consumes events from Kafka and processes them with **chaos simulation**.
+Core service responsible for consuming and processing events.
 
 ---
 
-## 🚀 Features
+## 👨‍💻 Author
 
-* Kafka consumer
-* Failure simulation
-* Delay simulation
-* Retry with backoff
-* Dead Letter Queue (DLQ)
-* Manual replay support
+**Arthur Salla**
 
 ---
 
-## 🎮 Chaos Controls
+## 🧠 Responsibilities
 
-### Enable Failure
-
-```
-POST /api/chaos/failure?enabled=true
-```
-
-### Set Delay
-
-```
-POST /api/chaos/delay?ms=3000
-```
-
-### Get Chaos State
-
-```
-GET /api/chaos
-```
+- Consume Kafka events
+- Process business logic
+- Persist data to MongoDB
+- Handle failures (DLQ)
 
 ---
 
-## 🔁 Replay API
+## ⚙️ Tech Stack
 
-```
-POST /api/replay
-```
+- Spring Boot
+- Kafka Consumer
+- MongoDB
+- Micrometer (metrics)
 
 ---
 
-## 🔄 Processing Flow
+## 🔥 Key Features
 
-```
-Kafka → Processing → Success
-                ↓
-              Failure
-                ↓
-            Retry (3x)
-                ↓
-              DLQ
-                ↓
-            Manual Replay
+- Dead Letter Queue (DLQ)
+- Retry handling
+- Chaos testing support
+
+---
+
+## 📊 Metrics
+
+- events_processed_total
+- events_dlq_total
+
+---
+
+## 🧠 Flow
+
+```text
+Kafka → Processing Service → MongoDB
 ```
 
 ---
 
-## ⚙️ Running
+## ⚠️ Failure Handling
 
-```bash
-mvn spring-boot:run
-```
-
-Runs on:
-
-```
-http://localhost:8081
-```
+- Failed events → DLQ
+- Metrics updated → alerts triggered
 
 ---
 
-## 📘 Swagger
+## 🎯 Role in System
 
-```
-http://localhost:8081/swagger-ui/index.html
-```
-
----
-
-## 🧠 Key Concepts Demonstrated
-
-* At-least-once delivery
-* Offset management
-* Retry strategies
-* DLQ handling
-* Chaos engineering basics
+This is the **core processing engine**, responsible for business logic execution.

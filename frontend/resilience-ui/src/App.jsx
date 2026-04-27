@@ -1,8 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 
-const API_PROCESSING = "http://localhost:8081";
-const API_EVENT = "http://localhost:8080";
+const API_GATEWAY = import.meta.env.VITE_API_BASE_URL;
 
 function App() {
   const [events, setEvents] = useState([]);
@@ -30,13 +29,13 @@ function App() {
     const interval = setInterval(() => {
       fetchEvents();
       fetchChaos();
-    }, 2000);
+    }, 5000);
 
     return () => clearInterval(interval);
   }, []);
 
   const fetchEvents = async () => {
-    const res = await axios.get(`${API_PROCESSING}/api/events`);
+    const res = await axios.get(`${API_GATEWAY}/api/events`);
     const newEvents = res.data.sort((a, b) => b.createdAt - a.createdAt);
 
     const newChangedMap = {};
@@ -58,7 +57,7 @@ function App() {
   };
 
   const fetchChaos = async () => {
-    const res = await axios.get(`${API_PROCESSING}/api/chaos`);
+    const res = await axios.get(`${API_GATEWAY}/api/chaos`);
     setChaos(res.data);
   };
 
@@ -74,7 +73,7 @@ function App() {
   const sendEvent = async () => {
     if (!userId.trim()) return;
 
-    await axios.post(`${API_EVENT}/api/events`, {
+    await axios.post(`${API_GATEWAY}/api/events`, {
       type: "USER_SIGNUP",
       payload: { userId },
     });
@@ -85,7 +84,7 @@ function App() {
 
   const sendBulk = async () => {
     setLoading(true);
-    await axios.post(`${API_EVENT}/api/events/bulk?count=10`);
+    await axios.post(`${API_GATEWAY}/api/events/bulk?count=10`);
     setTimeout(() => {
       fetchEvents();
       setLoading(false);
@@ -93,29 +92,29 @@ function App() {
   };
 
   const enableFailure = async () => {
-    await axios.post(`${API_PROCESSING}/api/chaos/failure?enabled=true`);
+    await axios.post(`${API_GATEWAY}/api/chaos/failure?enabled=true`);
     fetchChaos();
   };
 
   const disableFailure = async () => {
-    await axios.post(`${API_PROCESSING}/api/chaos/failure?enabled=false`);
+    await axios.post(`${API_GATEWAY}/api/chaos/failure?enabled=false`);
     fetchChaos();
   };
 
   const setChaosDelay = async () => {
     if (!delay) return;
-    await axios.post(`${API_PROCESSING}/api/chaos/delay?ms=${delay}`);
+    await axios.post(`${API_GATEWAY}/api/chaos/delay?ms=${delay}`);
     setDelay("");
     fetchChaos();
   };
 
   const resetDelay = async () => {
-    await axios.post(`${API_PROCESSING}/api/chaos/delay?ms=0`);
+    await axios.post(`${API_GATEWAY}/api/chaos/delay?ms=0`);
     fetchChaos();
   };
 
   const replayEvent = async (event) => {
-    await axios.post(`${API_PROCESSING}/api/replay`, event);
+    await axios.post(`${API_GATEWAY}/api/replay`, event);
     fetchEvents();
   };
 
@@ -128,7 +127,7 @@ function App() {
 
     try {
       setDemoPhase("Injecting latency...");
-      await axios.post(`${API_PROCESSING}/api/chaos/delay?ms=2000`);
+      await axios.post(`${API_GATEWAY}/api/chaos/delay?ms=2000`);
       await sleep(1000);
 
       setDemoPhase("Enabling failure...");
@@ -140,7 +139,7 @@ function App() {
         const id = `demo-${i}-${Date.now()}`;
         demoEventIds.push(id);
 
-        await axios.post(`${API_EVENT}/api/events`, {
+        await axios.post(`${API_GATEWAY}/api/events`, {
           type: "USER_SIGNUP",
           payload: { userId: id },
         });
@@ -472,6 +471,7 @@ function StatusBadge({ status }) {
     FAILED: "#e74c3c",
     PROCESSING: "#3498db",
     REPLAYING: "#9b59b6",
+    PENDING: "#95a5a6",
   };
   return <span style={{ background: map[status], padding: 4 }}>{status}</span>;
 }

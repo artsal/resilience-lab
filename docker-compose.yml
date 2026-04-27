@@ -2,11 +2,13 @@ version: "3.8"
 
 services:
 
+  # 🟢 ZOOKEEPER
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
 
+  # 🟢 KAFKA
   kafka:
     image: confluentinc/cp-kafka:7.5.0
     depends_on:
@@ -16,9 +18,11 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
+  # 🟢 MONGO
   mongo:
     image: mongo:6
     ports:
@@ -26,13 +30,17 @@ services:
     volumes:
       - mongo-data:/data/db
 
+  # 🟢 EVENT SERVICE
   event-service:
     build: ./services/event-service
     ports:
       - "8080:8080"
     depends_on:
       - kafka
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
 
+  # 🟢 PROCESSING SERVICE
   processing-service:
     build: ./services/processing-service
     ports:
@@ -40,14 +48,29 @@ services:
     depends_on:
       - kafka
       - mongo
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
 
+  # 🟢 API GATEWAY
+  api-gateway:
+    build: ./services/api-gateway
+    ports:
+      - "8082:8082"
+    depends_on:
+      - event-service
+      - processing-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+
+  # 🟢 PROMETHEUS
   prometheus:
     image: prom/prometheus
     ports:
       - "9090:9090"
     volumes:
-      - ./infra/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
 
+  # 🟢 GRAFANA
   grafana:
     image: grafana/grafana
     ports:
@@ -55,8 +78,10 @@ services:
     depends_on:
       - prometheus
     volumes:
-      - grafana-storage:/var/lib/grafana
+      - grafana-data:/var/lib/grafana
+      - ./infra/grafana/provisioning:/etc/grafana/provisioning
+      - ./infra/grafana/dashboards:/var/lib/grafana/dashboards
 
 volumes:
   mongo-data:
-  grafana-storage:
+  grafana-data:

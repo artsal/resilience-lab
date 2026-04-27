@@ -1,0 +1,34 @@
+apiVersion: 1
+
+groups:
+  - name: resilience-alerts
+    interval: 10s
+    rules:
+
+      - uid: dlq-alert
+        title: DLQ Spike
+        condition: A
+        data:
+          - refId: A
+            datasourceUid: Prometheus
+            model:
+              expr: clamp_min(increase(events_dlq_total[1m]), 0)
+        for: 10s
+        annotations:
+          summary: "DLQ spike detected"
+        labels:
+          severity: critical
+
+      - uid: gateway-error
+        title: Gateway Error Alert
+        condition: A
+        data:
+          - refId: A
+            datasourceUid: Prometheus
+            model:
+              expr: sum(rate(http_server_requests_seconds_count{status=~"5.."}[1m]))
+        for: 10s
+        annotations:
+          summary: "High gateway error rate"
+        labels:
+          severity: critical

@@ -1,0 +1,41 @@
+spring:
+  cloud:
+    gateway:
+      server:
+        webflux:
+
+          routes:
+            # POST → event-service
+            - id: event-service-write
+              uri: http://event-service:8080
+              predicates:
+                - Path=/api/events,/api/events/**
+                - Method=POST
+
+            # GET → processing-service
+            - id: processing-service-read
+              uri: http://processing-service:8081
+              predicates:
+                - Path=/api/events,/api/events/**
+                - Method=GET
+
+            # Chaos, replay, webhook → processing-service
+            - id: processing-service-ops
+              uri: http://processing-service:8081
+              predicates:
+                - Path=/api/chaos/**,/api/replay/**,/api/webhook/**
+
+          globalcors:
+            add-to-simple-url-handler-mapping: true   # 🔥 IMPORTANT
+            cors-configurations:
+              '[/**]':
+                allowedOrigins:
+                  - "http://localhost:5173"
+                allowedMethods:
+                  - GET
+                  - POST
+                  - PUT
+                  - DELETE
+                  - OPTIONS
+                allowedHeaders: "*"
+                allowCredentials: false

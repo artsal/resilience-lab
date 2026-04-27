@@ -1,100 +1,199 @@
-# 🧪 Resilience Lab
+# 🚀 Resilience Lab — Event-Driven Microservices System
 
-A distributed system simulator that demonstrates **failure handling, retries, dead-letter queues, and recovery** using modern backend technologies.
-
----
-
-## 🚀 What This Project Demonstrates
-
-* Event-driven architecture using Kafka
-* Failure simulation (Chaos Engineering concepts)
-* Retry mechanisms with backoff
-* Dead Letter Queue (DLQ) handling
-* Manual replay and system recovery
-* Traffic spikes and latency simulation
+A production-style, event-driven microservices platform designed to demonstrate **resilience, observability, and failure handling** using modern backend architecture patterns.
 
 ---
 
-## 🏗️ Architecture
+## 👨‍💻 Author
 
+**Arthur Salla**
+Senior Software Engineer | Transitioning into AI & Distributed Systems Engineering
+
+---
+
+## 🧠 Project Vision
+
+Modern distributed systems are not defined by how they behave during success — but by how they behave during failure.
+
+This project simulates a real-world backend system where:
+
+- Services communicate asynchronously via Kafka
+- Failures are expected and handled gracefully
+- Observability is first-class, not an afterthought
+- Alerts are triggered based on real system behavior
+
+---
+
+## 🏗️ Architecture Overview
+
+```text
+Frontend (React)
+        ↓
+API Gateway (Spring Cloud Gateway)
+        ↓
+Event Service → Kafka → Processing Service → MongoDB
+                        ↓
+                  Prometheus
+                        ↓
+                     Grafana
+                        ↓
+                      Alerts
 ```
-Client → Event Service → Kafka → Processing Service
-                                      ↓
-                                   (Failure)
-                                      ↓
-                               DLQ (Kafka)
-                                      ↓
-                             Replay (Manual)
-                                      ↓
-                              Back to Kafka
+
+---
+
+## ⚙️ Technology Stack
+
+| Layer            | Technology                  |
+| ---------------- | --------------------------- |
+| Frontend         | React (Vite)                |
+| Backend          | Spring Boot (WebFlux + MVC) |
+| Messaging        | Apache Kafka                |
+| Database         | MongoDB                     |
+| Gateway          | Spring Cloud Gateway        |
+| Monitoring       | Prometheus (Micrometer)     |
+| Visualization    | Grafana                     |
+| Containerization | Docker & Docker Compose     |
+
+---
+
+## 🔥 Key Capabilities
+
+### 🟢 Event-Driven Architecture
+
+- Asynchronous communication via Kafka
+- Decoupled services for scalability
+
+### 🟢 API Gateway
+
+- Central routing layer
+- CORS handling
+- Unified entry point
+
+### 🟢 Observability
+
+- Metrics via Micrometer
+- Prometheus scraping
+- Grafana dashboards
+
+### 🟢 Alerting System
+
+- DLQ spike detection
+- Gateway error monitoring (5xx)
+- Real-time alert lifecycle (Normal → Pending → Firing)
+
+### 🟢 Chaos Testing
+
+- Simulate downstream failures
+- Observe system resilience in real-time
+
+---
+
+## 🧪 Demo Walkthrough
+
+1. Generate events via UI
+2. Observe processing pipeline (Kafka → Processing Service)
+3. Monitor metrics in Grafana
+4. Simulate failure:
+
+   ```bash
+   docker stop processing-service
+   ```
+
+5. Observe:
+   - Gateway errors spike
+   - Alerts fire 🔴
+
+6. Restart service:
+
+   ```bash
+   docker start processing-service
+   ```
+
+7. System recovers automatically
+
+---
+
+## ▶️ Running the Project
+
+### 🐳 Docker (Recommended)
+
+```bash
+docker-compose up --build
+```
+
+Access:
+
+- Frontend → http://localhost:5173
+- API Gateway → http://localhost:8082
+- Grafana → http://localhost:3000
+- Prometheus → http://localhost:9090
+
+---
+
+### 💻 Local (Development Mode)
+
+Run services via IntelliJ with:
+
+```bash
+-Dspring.profiles.active=local
 ```
 
 ---
 
-## 🧩 Services
+## 📊 Observability & Monitoring
 
-| Service                   | Description                                           |
-| ------------------------- | ----------------------------------------------------- |
-| event-service             | Produces events to Kafka                              |
-| processing-service        | Consumes events, applies chaos, handles retries & DLQ |
-| (optional) replay-service | Handles replay of failed events (future enhancement)  |
+### Dashboards (Grafana)
 
----
+- Event throughput
+- Total processed events
+- DLQ trends
+- Gateway traffic
+- Error rates
 
-## 🎮 Chaos Features
+### Alerts
 
-* Toggle failure mode
-* Add processing delay
-* Generate bulk traffic
-* Replay failed events
+- DLQ spike detection
+- Gateway 5xx error rate
 
 ---
 
-## 🔧 Tech Stack
+## 📁 Project Structure
 
-* Java + Spring Boot
-* Apache Kafka
-* Docker (Kafka setup)
-* Swagger / OpenAPI
-* (Upcoming) MongoDB
-* (Upcoming) React UI
-* (Upcoming) Prometheus + Grafana
-
----
-
-## 🧪 Demo Scenarios
-
-### ✅ Normal Flow
-
-Event → Processed successfully
-
-### 💥 Failure Flow
-
-Event → Retry → DLQ
-
-### 🔁 Recovery Flow
-
-DLQ → Replay → Success
-
-### ⏱️ Latency Simulation
-
-Artificial delay in processing
-
-### 📈 Traffic Spike
-
-Bulk events causing backlog
+```text
+frontend/
+services/
+  event-service/
+  processing-service/
+  api-gateway/
+infra/
+  grafana/
+docker-compose.yml
+```
 
 ---
 
-## 🏃 How to Run
+## 🎯 What This Project Demonstrates
 
-1. Start Kafka (Docker)
-2. Run `event-service`
-3. Run `processing-service`
-4. Open Swagger UIs
+- Microservices architecture design
+- Event-driven systems using Kafka
+- Observability-first development
+- Failure detection & resilience patterns
+- Real-world alerting strategies
+- Containerized deployments
 
 ---
 
-## 🎯 Why This Project
+## 🚀 Future Enhancements
 
-This project simulates **real-world distributed system failures and recovery**, making it a strong showcase of backend engineering and system design skills.
+- Circuit Breakers (Resilience4j)
+- Distributed Tracing (Jaeger)
+- Authentication (JWT/OAuth)
+- CI/CD Pipeline
+- Kubernetes deployment
+
+---
+
+## 💡 Key Takeaway
+
+This project focuses not just on building services, but on building **systems that can be observed, tested, and trusted under failure conditions**.
