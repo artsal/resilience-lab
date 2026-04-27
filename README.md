@@ -7,7 +7,6 @@ A production-style, event-driven microservices platform designed to demonstrate 
 ## 👨‍💻 Author
 
 **Arthur Salla**
-Senior Software Engineer | Transitioning into AI & Distributed Systems Engineering
 
 ---
 
