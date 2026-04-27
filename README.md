@@ -1,6 +1,6 @@
 ![Java](https://img.shields.io/badge/Java-17-orange)
 ![Spring Boot](https://img.shields.io/badge/SpringBoot-3.x-brightgreen)
-![Kafka](https://img.shields.io/badge/Kafka-Event--Driven-black)
+![Kafka](https://img.shields.io/badge/Kafka-Event--Driven-pink)
 ![Docker](https://img.shields.io/badge/Docker-Containerized-blue)
 ![Prometheus](https://img.shields.io/badge/Prometheus-Monitoring-orange)
 ![Grafana](https://img.shields.io/badge/Grafana-Dashboards-yellow)
