@@ -79,7 +79,6 @@ services:
       - prometheus
     volumes:
       - grafana-data:/var/lib/grafana
-      - ./infra/grafana/provisioning:/etc/grafana/provisioning
       - ./infra/grafana/dashboards:/var/lib/grafana/dashboards
 
 volumes:
