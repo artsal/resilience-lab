@@ -1,6 +1,13 @@
 import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 
+/* 🔥 Axios instance with ngrok bypass */
+const api = axios.create({
+  headers: {
+    "ngrok-skip-browser-warning": "true",
+  },
+});
+
 const API_GATEWAY =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8082";
 
@@ -36,7 +43,7 @@ function App() {
   }, []);
 
   const fetchEvents = async () => {
-    const res = await axios.get(`${API_GATEWAY}/api/events`);
+    const res = await api.get(`${API_GATEWAY}/api/events`);
     const newEvents = res.data.sort((a, b) => b.createdAt - a.createdAt);
 
     const newChangedMap = {};
@@ -58,7 +65,7 @@ function App() {
   };
 
   const fetchChaos = async () => {
-    const res = await axios.get(`${API_GATEWAY}/api/chaos`);
+    const res = await api.get(`${API_GATEWAY}/api/chaos`);
     setChaos(res.data);
   };
 
@@ -74,7 +81,7 @@ function App() {
   const sendEvent = async () => {
     if (!userId.trim()) return;
 
-    await axios.post(`${API_GATEWAY}/api/events`, {
+    await api.post(`${API_GATEWAY}/api/events`, {
       type: "USER_SIGNUP",
       payload: { userId },
     });
@@ -85,7 +92,7 @@ function App() {
 
   const sendBulk = async () => {
     setLoading(true);
-    await axios.post(`${API_GATEWAY}/api/events/bulk?count=10`);
+    await api.post(`${API_GATEWAY}/api/events/bulk?count=10`);
     setTimeout(() => {
       fetchEvents();
       setLoading(false);
@@ -93,29 +100,29 @@ function App() {
   };
 
   const enableFailure = async () => {
-    await axios.post(`${API_GATEWAY}/api/chaos/failure?enabled=true`);
+    await api.post(`${API_GATEWAY}/api/chaos/failure?enabled=true`);
     fetchChaos();
   };
 
   const disableFailure = async () => {
-    await axios.post(`${API_GATEWAY}/api/chaos/failure?enabled=false`);
+    await api.post(`${API_GATEWAY}/api/chaos/failure?enabled=false`);
     fetchChaos();
   };
 
   const setChaosDelay = async () => {
     if (!delay) return;
-    await axios.post(`${API_GATEWAY}/api/chaos/delay?ms=${delay}`);
+    await api.post(`${API_GATEWAY}/api/chaos/delay?ms=${delay}`);
     setDelay("");
     fetchChaos();
   };
 
   const resetDelay = async () => {
-    await axios.post(`${API_GATEWAY}/api/chaos/delay?ms=0`);
+    await api.post(`${API_GATEWAY}/api/chaos/delay?ms=0`);
     fetchChaos();
   };
 
   const replayEvent = async (event) => {
-    await axios.post(`${API_GATEWAY}/api/replay`, event);
+    await api.post(`${API_GATEWAY}/api/replay`, event);
     fetchEvents();
   };
 
@@ -128,7 +135,7 @@ function App() {
 
     try {
       setDemoPhase("Injecting latency...");
-      await axios.post(`${API_GATEWAY}/api/chaos/delay?ms=2000`);
+      await api.post(`${API_GATEWAY}/api/chaos/delay?ms=2000`);
       await sleep(1000);
 
       setDemoPhase("Enabling failure...");
@@ -140,7 +147,7 @@ function App() {
         const id = `demo-${i}-${Date.now()}`;
         demoEventIds.push(id);
 
-        await axios.post(`${API_GATEWAY}/api/events`, {
+        await api.post(`${API_GATEWAY}/api/events`, {
           type: "USER_SIGNUP",
           payload: { userId: id },
         });
@@ -196,6 +203,8 @@ function App() {
         .flash-orange { animation: flashOrange 0.8s ease; }
         .flash-blue { animation: flashBlue 0.8s ease; }
       `}</style>
+
+      {/* UI code unchanged */}
 
       <div style={container}>
         <h1 style={{ textAlign: "center" }}>🧪 Resilience Lab</h1>
