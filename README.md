@@ -7,7 +7,7 @@
 ![Status](https://img.shields.io/badge/Status-Production--Style-success)
 ![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen)
 
-# 🚀 Resilience Lab — Event-Driven Microservices System
+# 🚀 Resilience Lab - Event-Driven Microservices System
 
 > A production-style, event-driven microservices platform designed to demonstrate **resilience, observability, and failure handling** using modern backend architecture patterns.
 
